@@ -1,0 +1,138 @@
+version: '3.8'
+
+services:
+  repo:
+    image: ghcr.io/wirepact/contract-api:1-latest
+    environment:
+      - DEBUG=true
+      - PORT=9000
+      - API_KEY=foobar
+    networks:
+      - app-net
+
+  repo-gui:
+    image: ghcr.io/wirepact/contract-gui:1-latest
+    environment:
+      - DEBUG=true
+      - PORT=9090
+      - REPO_HOST=http://repo:9000
+      - REPO_API_KEY=foobar
+    networks:
+      - app-net
+    ports:
+      - 9090:9090
+
+  pki-main:
+    image: ghcr.io/wirepact/k8s-pki:2.3.9
+    environment:
+      - DEBUG=true
+      - PORT=8080
+      - LOCAL=true
+    networks:
+      - app-net
+
+  app:
+    image: ghcr.io/wirepact/demo-applications/basic-auth-backend-app:latest
+    environment:
+      - HTTP_PROXY=http://envoy-app:8500
+      - PORT=8001
+      - AUTH_USER=admin
+      - AUTH_PASS=supersecret
+      - API_URL=http://envoy-api:9000/swapi/people
+    networks:
+      - app-net
+
+  envoy-app:
+    image: envoyproxy/envoy:v1.23-latest
+    command: envoy -c /etc/envoy/envoy.yaml --component-log-level ext_authz:trace
+    volumes:
+      - ./hack/envoy-config.app.yaml:/etc/envoy/envoy.yaml:ro
+      - app:/certs
+    networks:
+      - app-net
+    ports:
+      - 8080:8080
+
+  translator-app:
+    image: ghcr.io/wirepact/k8s-basic-auth-translator:2.0.31
+    volumes:
+      - ./hack/test-repository.csv:/test-repository.csv:ro
+    environment:
+      - PKI_ADDRESS=http://pki-main:8080
+      - NAME=translator-app
+      - DEBUG=true
+      - CSV_PATH=/test-repository.csv
+    networks:
+      - app-net
+
+  provider-app:
+    image: ghcr.io/wirepact/contract-provider:1-latest
+    user: root
+    depends_on:
+      - repo
+      - pki-main
+    environment:
+      - DEBUG=true
+      - COMMON_NAME=provider-app
+      - PKI_ADDRESS=http://pki-main:8080
+      - REPO_ADDRESS=http://repo:9000
+      - REPO_API_KEY=foobar
+    networks:
+      - app-net
+    volumes:
+      - app:/app/data
+
+  api:
+    image: ghcr.io/wirepact/demo-applications/basic-auth-api:latest
+    environment:
+      - PORT=9001
+      - AUTH_USERNAME=admin
+      - AUTH_PASSWORD=supersecret
+    networks:
+      - app-net
+
+  envoy-api:
+    image: envoyproxy/envoy:v1.23-latest
+    command: envoy -c /etc/envoy/envoy.yaml --component-log-level ext_authz:trace
+    volumes:
+      - ./hack/envoy-config.api.yaml:/etc/envoy/envoy.yaml:ro
+      - api:/certs
+    networks:
+      - app-net
+
+  translator-api:
+    image: ghcr.io/wirepact/k8s-basic-auth-translator:2.0.31
+    volumes:
+      - ./hack/test-repository.csv:/test-repository.csv:ro
+    environment:
+      - PKI_ADDRESS=http://pki-main:8080
+      - NAME=translator-api
+      - DEBUG=true
+      - CSV_PATH=/test-repository.csv
+    networks:
+      - app-net
+
+  provider-api:
+    image: ghcr.io/wirepact/contract-provider:1-latest
+    user: root
+    depends_on:
+      - repo
+      - pki-main
+    environment:
+      - DEBUG=true
+      - COMMON_NAME=provider-api
+      - PKI_ADDRESS=http://pki-main:8080
+      - REPO_ADDRESS=http://repo:9000
+      - REPO_API_KEY=foobar
+    networks:
+      - app-net
+    volumes:
+      - api:/app/data
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  app:
+  api:
