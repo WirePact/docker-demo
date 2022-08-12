@@ -46,6 +46,20 @@ static_resources:
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          transport_socket:
+            name: envoy.transport_sockets.tls
+            typed_config:
+              '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+              require_client_certificate: false
+              common_tls_context:
+                validation_context:
+                  trusted_ca:
+                    filename: /certs/chain.crt
+                tls_certificates:
+                  - certificate_chain:
+                      filename: /certs/mychain.crt
+                    private_key:
+                      filename: /certs/cert.key
 
     - name: egress_listener
       address:
