@@ -119,6 +119,20 @@ static_resources:
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+          # transport_socket:
+          #   name: envoy.transport_sockets.tls
+          #   typed_config:
+          #     '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          #     require_client_certificate: false
+          #     common_tls_context:
+          #       validation_context:
+          #         trusted_ca:
+          #           filename: /certs/chain.crt
+          #       tls_certificates:
+          #         - certificate_chain:
+          #             filename: /certs/cert_with_ca.crt
+          #           private_key:
+          #             filename: /certs/cert.key
 
   clusters:
     - name: target_service
@@ -172,6 +186,16 @@ static_resources:
 
     - name: dynamic_forward_proxy_cluster
       lb_policy: CLUSTER_PROVIDED
+      # transport_socket:
+      #   name: envoy.transport_sockets.tls
+      #   typed_config:
+      #     '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+      #     common_tls_context:
+      #       tls_certificates:
+      #         - certificate_chain:
+      #             filename: /certs/cert_with_ca.crt
+      #           private_key:
+      #             filename: /certs/cert.key
       cluster_type:
         name: envoy.clusters.dynamic_forward_proxy
         typed_config:
