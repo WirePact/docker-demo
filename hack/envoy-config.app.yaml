@@ -50,14 +50,14 @@ static_resources:
             name: envoy.transport_sockets.tls
             typed_config:
               '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-              require_client_certificate: false
+              require_client_certificate: true
               common_tls_context:
                 validation_context:
                   trusted_ca:
                     filename: /certs/chain.crt
                 tls_certificates:
                   - certificate_chain:
-                      filename: /certs/mychain.crt
+                      filename: /certs/cert_with_ca.crt
                     private_key:
                       filename: /certs/cert.key
 

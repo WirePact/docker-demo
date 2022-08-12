@@ -11,7 +11,6 @@ services:
     networks:
       - app-net
     volumes:
-      # - ./hack/nginx.conf:/etc/nginx/templates/default.conf.template:ro
       - ./hack/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - entry:/certs
 
@@ -75,14 +74,12 @@ services:
     image: envoyproxy/envoy:v1.23-latest
     depends_on:
       - provider-app
-    command: envoy -c /etc/envoy/envoy.yaml --component-log-level connection:trace
+    command: envoy -c /etc/envoy/envoy.yaml
     volumes:
       - ./hack/envoy-config.app.yaml:/etc/envoy/envoy.yaml:ro
       - app:/certs
     networks:
       - app-net
-    ports:
-      - 8081:8080
 
   translator-app:
     image: ghcr.io/wirepact/k8s-basic-auth-translator:2.0.31
@@ -104,7 +101,7 @@ services:
       - pki-main
     environment:
       - DEBUG=true
-      - COMMON_NAME=provider-app
+      - COMMON_NAME=envoy-app
       - PKI_ADDRESS=http://pki-main:8080
       - REPO_ADDRESS=http://repo:9000
       - REPO_API_KEY=foobar
@@ -153,7 +150,7 @@ services:
       - pki-main
     environment:
       - DEBUG=true
-      - COMMON_NAME=provider-api
+      - COMMON_NAME=envoy-api
       - PKI_ADDRESS=http://pki-main:8080
       - REPO_ADDRESS=http://repo:9000
       - REPO_API_KEY=foobar
