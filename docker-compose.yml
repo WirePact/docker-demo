@@ -67,9 +67,13 @@ services:
     image: ghcr.io/wirepact/demo-applications/basic-auth-backend-app:latest
     depends_on:
       - provider-app
+    entrypoint: ''
+    command: sh -c "update-ca-certificates && dotnet /app/BasicAuthApp.dll"
     environment:
-      - HTTP_PROXY=http://envoy-app:8500
+      # - HTTP_PROXY=http://envoy-app:8500
       - HTTPS_PROXY=https://envoy-app:8500
+      - LOGGING__LOGLEVEL__DEFAULT=Debug
+      - LOGGING__LOGLEVEL__MICROSOFT.ASPNETCORE=Debug
       - PORT=8001
       - AUTH_USER=admin
       - AUTH_PASS=supersecret
@@ -77,16 +81,18 @@ services:
     networks:
       - app-net
     volumes:
+      - ./tmp/app/ca.crt:/usr/local/share/ca-certificates/ca.crt
       - ./tmp/app:/certs
 
   envoy-app:
     image: envoyproxy/envoy:v1.23-latest
     depends_on:
       - provider-app
-    command: envoy -c /etc/envoy/envoy.yaml --component-log-level connection:debug
+    command: envoy -c /etc/envoy/envoy.yaml --component-log-level connection:trace,ext_authz:debug,conn_handler:debug,forward_proxy:debug,http:debug,matcher:debug,router:debug
     volumes:
       - ./hack/envoy-config.app.yaml:/etc/envoy/envoy.yaml:ro
       - ./tmp/app:/certs
+      - ./tmp/app/chain.crt:/usr/local/share/ca-certificates/chain.crt
     networks:
       - app-net
 
@@ -134,7 +140,7 @@ services:
     image: envoyproxy/envoy:v1.23-latest
     depends_on:
       - provider-api
-    command: envoy -c /etc/envoy/envoy.yaml
+    command: envoy -c /etc/envoy/envoy.yaml --component-log-level connection:debug,ext_authz:debug
     volumes:
       - ./hack/envoy-config.api.yaml:/etc/envoy/envoy.yaml:ro
       - ./tmp/api:/certs

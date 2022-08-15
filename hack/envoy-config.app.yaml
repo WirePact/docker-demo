@@ -88,6 +88,13 @@ static_resources:
                             prefix: '/'
                           route:
                             cluster: dynamic_forward_proxy_cluster
+                        - match:
+                            connect_matcher: {}
+                          route:
+                            cluster: dynamic_forward_proxy_cluster
+                upgrade_configs:
+                  - upgrade_type: CONNECT
+                    enabled: true
                 http_filters:
                   - name: envoy.filters.http.ext_authz
                     typed_config:
@@ -119,20 +126,6 @@ static_resources:
                   - name: envoy.filters.http.router
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-          # transport_socket:
-          #   name: envoy.transport_sockets.tls
-          #   typed_config:
-          #     '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-          #     require_client_certificate: false
-          #     common_tls_context:
-          #       validation_context:
-          #         trusted_ca:
-          #           filename: /certs/chain.crt
-          #       tls_certificates:
-          #         - certificate_chain:
-          #             filename: /certs/cert_with_ca.crt
-          #           private_key:
-          #             filename: /certs/cert.key
 
   clusters:
     - name: target_service
@@ -186,16 +179,20 @@ static_resources:
 
     - name: dynamic_forward_proxy_cluster
       lb_policy: CLUSTER_PROVIDED
-      # transport_socket:
-      #   name: envoy.transport_sockets.tls
-      #   typed_config:
-      #     '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
-      #     common_tls_context:
-      #       tls_certificates:
-      #         - certificate_chain:
-      #             filename: /certs/cert_with_ca.crt
-      #           private_key:
-      #             filename: /certs/cert.key
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            validation_context:
+              trusted_ca:
+                filename: /certs/chain.crt
+            tls_certificates:
+              - certificate_chain:
+                  filename: /certs/cert_with_ca.crt
+                private_key:
+                  filename: /certs/cert.key
+
       cluster_type:
         name: envoy.clusters.dynamic_forward_proxy
         typed_config:
