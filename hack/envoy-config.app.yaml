@@ -3,6 +3,10 @@ admin:
     - name: envoy.access_loggers.stdout
       typed_config:
         '@type': type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 5000
 
 static_resources:
   listeners:

@@ -93,6 +93,8 @@ services:
       - ./hack/envoy-config.app.yaml:/etc/envoy/envoy.yaml:ro
       - ./tmp/app:/certs
       - ./tmp/app/chain.crt:/usr/local/share/ca-certificates/chain.crt
+    ports:
+      - 5000:5000
     networks:
       - app-net
 
@@ -140,10 +142,12 @@ services:
     image: envoyproxy/envoy:v1.23-latest
     depends_on:
       - provider-api
-    command: envoy -c /etc/envoy/envoy.yaml --component-log-level connection:debug,ext_authz:debug
+    command: envoy -c /etc/envoy/envoy.yaml --component-log-level connection:trace,ext_authz:debug
     volumes:
       - ./hack/envoy-config.api.yaml:/etc/envoy/envoy.yaml:ro
       - ./tmp/api:/certs
+    ports:
+      - 5001:5000
     networks:
       - app-net
 

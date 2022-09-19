@@ -3,6 +3,10 @@ admin:
     - name: envoy.access_loggers.stdout
       typed_config:
         '@type': type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 5000
 
 static_resources:
   listeners:
@@ -50,7 +54,7 @@ static_resources:
             name: envoy.transport_sockets.tls
             typed_config:
               '@type': type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-              require_client_certificate: true
+              require_client_certificate: false
               common_tls_context:
                 validation_context:
                   trusted_ca:
